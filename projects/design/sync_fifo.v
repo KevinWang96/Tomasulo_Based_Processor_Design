@@ -1,11 +1,11 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-04-27 00:16:40
- * @LastEditTime: 2020-04-27 01:03:58
+ * @LastEditTime: 2020-04-27 01:09:41
  * @LastEditors: Please set LastEditors
  * @Description: A configuerable synchronous FIFO 
- *                  Reading is asynchronous, writing is synchronous
- * @FilePath: /Tomasulo_3/projects/design/fifo.v
+ *               Reading is asynchronous, writing is synchronous
+ * @FilePath: /Tomasulo_3/Tomasulo_3_test1/projects/design/sync_fifo.v
  */
 module sync_fifo #(
     parameter DEPTH = 32, // the depth must be a power of 2
