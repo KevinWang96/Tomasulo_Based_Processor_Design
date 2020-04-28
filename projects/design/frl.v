@@ -1,7 +1,7 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-04-28 00:39:38
- * @LastEditTime: 2020-04-28 01:12:09
+ * @LastEditTime: 2020-04-28 01:56:44
  * @LastEditors: Please set LastEditors
  * @Description: 
  *       a. Free Register List implemented using a sync FIFO
@@ -37,7 +37,8 @@
     sync_fifo #(
         .DEPTH(FRL_DEPTH),
         .WIDTH(FRL_WIDTH),
-        .PTR_WIDTH(FRL_PTR_WIDTH)
+        .PTR_WIDTH(FRL_PTR_WIDTH),
+        .RESET_MODE(3) // using reset mode 3, reset FRL with PID #32 to PID #128
     )
     sync_fifo_inst
     (

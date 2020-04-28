@@ -1,7 +1,7 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-04-27 00:16:40
- * @LastEditTime: 2020-04-28 00:58:37
+ * @LastEditTime: 2020-04-28 01:59:08
  * @LastEditors: Please set LastEditors
  * @Description: 
  *      a. A configuerable synchronous FIFO 
@@ -13,7 +13,13 @@
 module sync_fifo #(
     parameter DEPTH = 32, // the depth must be a power of 2
     parameter WIDTH = 32, // data width
-    parameter PTR_WIDTH = 6 // width or read and write pointer (using (n+1)-bit pointer)
+    parameter PTR_WIDTH = 6; // width or read and write pointer (using (n+1)-bit pointer)
+    parameter RESET_MODE = 0    // Different reset modes decide how to reset memory array
+                                // 0 mode: don't reset, keep reset value all X;
+                                // 1 mode: reset all bits to 0;
+                                // 2 mode: reset all bits to 1;
+                                // 3 mode: FRL mode, reseting FRL FIFO with preinitialized PID (application specific)
+                                //      only support FRL with fixed size (96 X 7)                      
 )
 (
     clk, reset, 
@@ -85,18 +91,80 @@ module sync_fifo #(
     assign w_en_q = (!full_i) && w_en;
 
     reg [0:PTR_WIDTH - 1] w_ptr_r; // read pointer (register)
-    always @(posedge clk)
+
+    // Appplied different reset mode 
+    generate
     begin
-        if(reset) w_ptr_r <= 0;
-        else  
-            // Change value of r_ptr_r synchronously
-            if(change_w_ptr_en) w_ptr_r <= change_w_ptr_value; 
-            else
-                if(w_en_q)
-                begin
-                    mem[w_ptr_r[1:PTR_WIDTH - 1]] <= din;
-                    w_ptr_r <= w_ptr_r + 1;
+        case(RESET_MODE) :
+            0 : // mode 0 ---------------------------------------------------------------- 
+                always @(posedge clk)
+                begin 
+                    if(reset) w_ptr_r <= 0;
+                    else  
+                        // Change value of r_ptr_r synchronously
+                        if(change_w_ptr_en) w_ptr_r <= change_w_ptr_value; 
+                        else
+                            if(w_en_q)
+                            begin
+                                mem[w_ptr_r[1:PTR_WIDTH - 1]] <= din;
+                                w_ptr_r <= w_ptr_r + 1;
+                            end
                 end
+            1 : // mode 1 ----------------------------------------------------------------
+                always @(posedge clk)
+                begin 
+                    if(reset) 
+                    begin : reset_loop
+                        integer i;
+                        w_ptr_r <= 0;
+                        for(i = 0; i < DEPTH; i = i + 1) mem[i] <= 0;
+                    else  
+                        // Change value of r_ptr_r synchronously
+                        if(change_w_ptr_en) w_ptr_r <= change_w_ptr_value; 
+                        else
+                            if(w_en_q)
+                            begin
+                                mem[w_ptr_r[1:PTR_WIDTH - 1]] <= din;
+                                w_ptr_r <= w_ptr_r + 1;
+                            end
+                end
+            2 : // mode 2 ----------------------------------------------------------------
+                always @(posedge clk)
+                begin 
+                    if(reset) 
+                    begin : reset_loop
+                        integer i;
+                        w_ptr_r <= 0;
+                        for(i = 0; i < DEPTH; i = i + 1) mem[i] <= {WIDTH{1'b1}};
+                    else  
+                        // Change value of r_ptr_r synchronously
+                        if(change_w_ptr_en) w_ptr_r <= change_w_ptr_value; 
+                        else
+                            if(w_en_q)
+                            begin
+                                mem[w_ptr_r[1:PTR_WIDTH - 1]] <= din;
+                                w_ptr_r <= w_ptr_r + 1;
+                            end
+                end
+            3 : // mode 3 ----------------------------------------------------------------
+                always @(posedge clk)
+                begin 
+                    if(reset) 
+                    begin : reset_loop
+                        integer i;
+                        w_ptr_r <= 0;
+                        for(i = 0; i < DEPTH; i = i + 1) mem[i] <= i + 32;
+                    else  
+                        // Change value of r_ptr_r synchronously
+                        if(change_w_ptr_en) w_ptr_r <= change_w_ptr_value; 
+                        else
+                            if(w_en_q)
+                            begin
+                                mem[w_ptr_r[1:PTR_WIDTH - 1]] <= din;
+                                w_ptr_r <= w_ptr_r + 1;
+                            end
+                end
+        endcase
     end
 
 //// Generates full_i & empty_i signals
