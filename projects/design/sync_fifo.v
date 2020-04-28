@@ -1,25 +1,26 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-04-27 00:16:40
- * @LastEditTime: 2020-04-27 01:09:41
+ * @LastEditTime: 2020-04-27 20:03:10
  * @LastEditors: Please set LastEditors
  * @Description: A configuerable synchronous FIFO 
  *               Reading is asynchronous, writing is synchronous
  * @FilePath: /Tomasulo_3/Tomasulo_3_test1/projects/design/sync_fifo.v
  */
+`timescale 1ns/1ps
 module sync_fifo #(
     parameter DEPTH = 32, // the depth must be a power of 2
-    parameter WIDTH = 32,
+    parameter WIDTH = 32
 )
 (
-    clk, reset, r_en, dout, r_ptr, w_en, din, w_ptr, full, empty
+    clk, reset, r_en, dout, r_ptr, w_en, din, w_ptr, full, empty, w_fail, r_fail
 );
     localparam ADDR = $clog2(DEPTH); // address
     localparam PTR_WIDTH = ADDR + 1; // using (n + 1)-bit write and read pointers
 
 //// Port Definition ///////////////////////////////////////////////////////////////
 
-     input clk, reset; // positive edge triggering and synchronous reset
+    input clk, reset; // positive edge triggering and synchronous reset
     
     // For read port:
     input r_en; // read enable 
@@ -28,11 +29,14 @@ module sync_fifo #(
 
     // For write port:
     input w_en; // write enable
-    input din; // write data in
+    input [0:WIDTH - 1] din; // write data in
     output [0:PTR_WIDTH - 1] w_ptr; // the value of wirte pointer
 
     // Flow control signal
     output full, empty;
+
+    // Fail signal
+    output w_fail, r_fail; // failure of read or write due to ilegal read or write
 
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -81,6 +85,15 @@ module sync_fifo #(
     assign diff = w_ptr_r - r_ptr_r;
     assign empty_i = (diff == 0);
     assign full_i = (diff == DEPTH);
+
+
+//// Generates w_fail & r_fail signals
+    assign w_fail = (w_en != w_en_q);
+    assign r_fail = (r_en != r_en_q);
+
+//// Generates w_ptr & r_ptr
+    assign w_ptr = w_ptr_r;
+    assign r_ptr = r_ptr_r;
 
 
 endmodule    

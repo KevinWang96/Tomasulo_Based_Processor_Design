@@ -41,9 +41,9 @@
 
 
 # top level module
-TOP = tb_cmp
-TOP_SYN = tb_cmp
-DESIGN_NAME = cardinal_cmp
+TOP = tb_sync_fifo # used in rtl simulation (pre-synthesis)
+TOP_SYN = *; # used in netlist simulation
+DESIGN_NAME = *; # used in synthesis
 
 # List of the design files
 DESIGN_FILES = ./design/*.v
