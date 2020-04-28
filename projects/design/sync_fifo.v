@@ -1,7 +1,7 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-04-27 00:16:40
- * @LastEditTime: 2020-04-28 01:59:08
+ * @LastEditTime: 2020-04-28 02:24:13
  * @LastEditors: Please set LastEditors
  * @Description: 
  *      a. A configuerable synchronous FIFO 
@@ -166,6 +166,7 @@ module sync_fifo #(
                 end
         endcase
     end
+    endgenerate
 
 //// Generates full_i & empty_i signals
     wire [0:PTR_WIDTH - 1] diff; // the difference of w_ptr_r and r_ptr_r
