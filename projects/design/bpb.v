@@ -1,7 +1,7 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-04-28 03:02:55
- * @LastEditTime: 2020-04-28 04:01:44
+ * @LastEditTime: 2020-04-28 05:33:14
  * @LastEditors: Please set LastEditors
  * @Description: 
  *      a. 8 X 2 Branch prediction buffer using 2-bit predictor
@@ -20,7 +20,7 @@
      cdb_branch, cdb_branch_res, cdb_bpb_addr, bpb_branch_prediction_cdb
  );
     
-    localparam BPB_ADDR = $clog2(DEPTH);
+    localparam BPB_ADDR = $clog2(`DEPTH);
 
     input clk, reset; // positive edge triggering and synchronous reset
 
@@ -35,7 +35,7 @@
     output reg bpb_branch_prediction_cdb; // 1-bit branch prediction used by CDB
 
     // Memory array 
-    reg [0:WIDTH - 1] mem [0:DEPTH - 1];
+    reg [0:`WIDTH - 1] mem [0:`DEPTH - 1];
 
 //// Read-write port:
     // Reading 
@@ -51,9 +51,11 @@
             endcase
     end
     // Writing
-    reg [0:WIDTH - 1] updated_predictor;
+    reg [0:`WIDTH - 1] updated_predictor;
     always @(*) // generates the output of incrementer or decrementer used by saturate counter
     begin
+        updated_predictor = mem[cdb_bpb_addr]; // if saturated, keep it as it is
+
         if( !( ((mem[cdb_bpb_addr] == 2'b11) && (cdb_branch_res)) 
             || ((mem[cdb_bpb_addr] == 2'b00) && (!cdb_branch_res)) ) // make sure counter is not saturate
         )
@@ -68,14 +70,14 @@
         if(reset) 
         begin : reset_loop
             integer i;
-            for(i = 0; i < DEPTH; i = i + 1) mem[i] <= RESET_VALUE;
+            for(i = 0; i < `DEPTH; i = i + 1) mem[i] <= RESET_VALUE;
         end
         else
             if(cdb_branch) mem[cdb_bpb_addr] <= updated_predictor;
     end
 
 //// Read-only port:
-    wire [0:WIDTH - 1] read_predictor; // supports internally forwarding
+    wire [0:`WIDTH - 1] read_predictor; // supports internally forwarding
     assign read_predictor = (du_bpb_addr == cdb_bpb_addr) ? updated_predictor : mem[cdb_bpb_addr];
 
     always @(*) // generates DU brach prediction based on 2-bit predictor
