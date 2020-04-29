@@ -1,7 +1,7 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-04-28 03:02:55
- * @LastEditTime: 2020-04-28 05:33:14
+ * @LastEditTime: 2020-04-28 17:59:03
  * @LastEditors: Please set LastEditors
  * @Description: 
  *      a. 8 X 2 Branch prediction buffer using 2-bit predictor
@@ -11,6 +11,7 @@
  */
  `define DEPTH = 8
  `define WIDTH = 2
+ `timescale 1ns/1ps
  module bpb #(
      parameter RESET_VALUE = 2'b10 // reset BPB with 2'10 (weakly taken)
  )

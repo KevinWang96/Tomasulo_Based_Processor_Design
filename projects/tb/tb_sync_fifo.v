@@ -1,7 +1,7 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-04-27 16:34:18
- * @LastEditTime: 2020-04-27 20:13:50
+ * @LastEditTime: 2020-04-28 17:45:53
  * @LastEditors: Please set LastEditors
  * @Description: Testbench for module sync_fifo
  * @FilePath: /Tomasulo_3/Tomasulo_3_test1/projects/tb/tb_sync_fifo.v
@@ -24,12 +24,17 @@ module tb_sync_fifo;
     wire [0:$clog2(DEPTH)] r_ptr, w_ptr;
     wire r_fail, w_fail;
 
+    reg change_w_ptr_en, change_r_ptr_en;
+    reg [0:$clog2(DEPTH)] change_w_ptr_value, change_r_ptr_value;
+
     always #(0.5 * CYCLE_TIME) clk = ~ clk;
 
     // DUT
     sync_fifo #(
         .DEPTH(DEPTH),
-        .WIDTH(WIDTH)
+        .WIDTH(WIDTH),
+        .PTR_WIDTH($clog2(DEPTH) + 1),
+        .RESET_MODE(0)
     )
     sync_fifo_dut
     (
@@ -41,7 +46,11 @@ module tb_sync_fifo;
 
         .full(full), .empty(empty),
 
-        .r_fail(r_fail), .w_fail(w_fail)
+        .r_fail(r_fail), .w_fail(w_fail),
+
+        .change_r_ptr_en(change_r_ptr_en), .change_r_ptr_value(change_r_ptr_value),
+
+        .change_w_ptr_en(change_w_ptr_en), .change_w_ptr_value(change_w_ptr_value)
     );
 
     integer signal_time_log;
@@ -61,6 +70,8 @@ module tb_sync_fifo;
         reset = 1;
         r_en = 0;
         w_en = 0;
+        change_r_ptr_en = 0;
+        change_w_ptr_en = 0;
 
         #(3.5 * CYCLE_TIME) 
         reset = 0;
@@ -87,7 +98,22 @@ module tb_sync_fifo;
         w_en = 0;
         r_en = 1;
 
-        #(32 * CYCLE_TIME)
+        #(16 * CYCLE_TIME)
+        // Test the confliction between pointer change and read or write operations
+        w_en = 1;
+        r_en = 0;
+        din = 10;
+        change_w_ptr_en = 1;
+        change_w_ptr_value = 5;
+
+        #(CYCLE_TIME)
+        w_en = 0;
+        r_en = 1;
+        change_r_ptr_en = 1;
+        change_w_ptr_en = 0;
+        change_r_ptr_value = 5;
+
+        #(4 * CYCLE_TIME)
         $fclose(signal_time_log);
         $finish;
     end

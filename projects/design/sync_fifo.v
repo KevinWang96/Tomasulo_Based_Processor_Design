@@ -1,7 +1,7 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-04-27 00:16:40
- * @LastEditTime: 2020-04-28 02:24:13
+ * @LastEditTime: 2020-04-28 19:40:45
  * @LastEditors: Please set LastEditors
  * @Description: 
  *      a. A configuerable synchronous FIFO 
@@ -13,13 +13,12 @@
 module sync_fifo #(
     parameter DEPTH = 32, // the depth must be a power of 2
     parameter WIDTH = 32, // data width
-    parameter PTR_WIDTH = 6; // width or read and write pointer (using (n+1)-bit pointer)
     parameter RESET_MODE = 0    // Different reset modes decide how to reset memory array
                                 // 0 mode: don't reset, keep reset value all X;
                                 // 1 mode: reset all bits to 0;
                                 // 2 mode: reset all bits to 1;
                                 // 3 mode: FRL mode, reseting FRL FIFO with preinitialized PID (application specific)
-                                //      only support FRL with fixed size (96 X 7)                      
+                                //      only support FRL with fixed size (128 X 7)                      
 )
 (
     clk, reset, 
@@ -32,6 +31,8 @@ module sync_fifo #(
 );
 
 //// Port Definition ///////////////////////////////////////////////////////////////
+
+    localparam PTR_WIDTH = $clog2(DEPTH) + 1; // width or read and write pointer (using (n+1)-bit pointer)
 
     input clk, reset; // positive edge triggering and synchronous reset
     
@@ -95,7 +96,7 @@ module sync_fifo #(
     // Appplied different reset mode 
     generate
     begin
-        case(RESET_MODE) :
+        case(RESET_MODE) 
             0 : // mode 0 ---------------------------------------------------------------- 
                 always @(posedge clk)
                 begin 
@@ -118,6 +119,7 @@ module sync_fifo #(
                         integer i;
                         w_ptr_r <= 0;
                         for(i = 0; i < DEPTH; i = i + 1) mem[i] <= 0;
+                    end
                     else  
                         // Change value of r_ptr_r synchronously
                         if(change_w_ptr_en) w_ptr_r <= change_w_ptr_value; 
@@ -136,6 +138,7 @@ module sync_fifo #(
                         integer i;
                         w_ptr_r <= 0;
                         for(i = 0; i < DEPTH; i = i + 1) mem[i] <= {WIDTH{1'b1}};
+                    end
                     else  
                         // Change value of r_ptr_r synchronously
                         if(change_w_ptr_en) w_ptr_r <= change_w_ptr_value; 
@@ -152,8 +155,9 @@ module sync_fifo #(
                     if(reset) 
                     begin : reset_loop
                         integer i;
-                        w_ptr_r <= 0;
-                        for(i = 0; i < DEPTH; i = i + 1) mem[i] <= i + 32;
+                        w_ptr_r <= DEPTH; // reset to full state
+                        for(i = 0; i < DEPTH; i = i + 1) mem[i] <= i;
+                    end
                     else  
                         // Change value of r_ptr_r synchronously
                         if(change_w_ptr_en) w_ptr_r <= change_w_ptr_value; 
