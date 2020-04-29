@@ -1,7 +1,7 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-04-28 00:39:38
- * @LastEditTime: 2020-04-28 20:16:43
+ * @LastEditTime: 2020-04-28 21:38:58
  * @LastEditors: Please set LastEditors
  * @Description: 
  *       a. Free Register List implemented using a sync 128 X 7 FIFO (7-bit PID)
@@ -12,7 +12,7 @@
  *           back to FRL to ensure recycling of PID
  * @FilePath: /Tomasulo_3/Tomasulo_3_test1/projects/design/frl.v
  */
- `define FRL_DEPTH 16 // 16 PIDs are needed (PID 32 - PID 48), PID 0 - PID 31 are preinitialized in RAT
+ `define FRL_DEPTH 16 // 16 PIDs are needed (PID 32 - PID 47), PID 0 - PID 31 are preinitialized in RAT
  `define FRL_WIDTH 6 // since there are 48 locations in PRF (physical register file)
  `define FRL_PTR_WIDTH 5 // (n + 1)-bit pointer
  `timescale 1ns/1ps
@@ -38,7 +38,7 @@
     sync_fifo #(
         .DEPTH(`FRL_DEPTH),
         .WIDTH(`FRL_WIDTH),
-        .RESET_MODE(3) // using reset mode 3, reset FRL with PID #32 to PID #128
+        .RESET_MODE(3) // using reset mode 3, reset FRL with PID #32 to PID #47
     )
     sync_fifo_inst
     (
