@@ -1,7 +1,7 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-04-27 00:16:40
- * @LastEditTime: 2020-04-28 19:40:45
+ * @LastEditTime: 2020-04-28 20:28:48
  * @LastEditors: Please set LastEditors
  * @Description: 
  *      a. A configuerable synchronous FIFO 
@@ -18,7 +18,7 @@ module sync_fifo #(
                                 // 1 mode: reset all bits to 0;
                                 // 2 mode: reset all bits to 1;
                                 // 3 mode: FRL mode, reseting FRL FIFO with preinitialized PID (application specific)
-                                //      only support FRL with fixed size (128 X 7)                      
+                                //      only support FRL with fixed size (16 X 7)                      
 )
 (
     clk, reset, 
@@ -156,7 +156,7 @@ module sync_fifo #(
                     begin : reset_loop
                         integer i;
                         w_ptr_r <= DEPTH; // reset to full state
-                        for(i = 0; i < DEPTH; i = i + 1) mem[i] <= i;
+                        for(i = 0; i < DEPTH; i = i + 1) mem[i] <= i + 32;
                     end
                     else  
                         // Change value of r_ptr_r synchronously

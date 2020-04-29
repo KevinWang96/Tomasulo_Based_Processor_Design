@@ -1,7 +1,7 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-04-28 03:02:55
- * @LastEditTime: 2020-04-28 17:59:03
+ * @LastEditTime: 2020-04-28 21:20:34
  * @LastEditors: Please set LastEditors
  * @Description: 
  *      a. 8 X 2 Branch prediction buffer using 2-bit predictor
@@ -9,8 +9,8 @@
  *      c. One read-write port used by CDB to lookup and update
  * @FilePath: /Tomasulo_3/Tomasulo_3_test1/projects/design/bpb.v
  */
- `define DEPTH = 8
- `define WIDTH = 2
+ `define DEPTH 8
+ `define WIDTH 2
  `timescale 1ns/1ps
  module bpb #(
      parameter RESET_VALUE = 2'b10 // reset BPB with 2'10 (weakly taken)

@@ -1,7 +1,7 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-04-28 17:57:15
- * @LastEditTime: 2020-04-28 19:44:42
+ * @LastEditTime: 2020-04-28 20:18:02
  * @LastEditors: Please set LastEditors
  * @Description: Testbench for frl.v
  * @FilePath: /Tomasulo_3_test1/projects/tb/tb_frl.v
@@ -10,9 +10,9 @@
  module tb_frl;
     
     parameter CYCLE_TIME = 10;
-    parameter FRL_WIDTH = 7;
-    parameter FRL_DEPTH = 128;
-    parameter FRL_PTR_WIDTH = FRL_WIDTH + 1;
+    parameter FRL_WIDTH = 6;
+    parameter FRL_DEPTH = 16;
+    parameter FRL_PTR_WIDTH = 5;
 
     reg clk, reset;
     reg dispatch_pid;
@@ -56,7 +56,7 @@
         #( (FRL_DEPTH + 5) * CYCLE_TIME)
         dispatch_pid = 0;
         return_pid = 1;
-        for(i = 0; i < FRL_DEPTH; i = i + 1)
+        for(i = 32; i < FRL_DEPTH + 32; i = i + 1)
         begin    
             pid_in = i;
             #(CYCLE_TIME);
