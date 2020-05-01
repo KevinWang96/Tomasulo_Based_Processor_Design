@@ -1,7 +1,7 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-05-01 01:43:21
- * @LastEditTime: 2020-05-01 06:18:12
+ * @LastEditTime: 2020-05-01 07:47:22
  * @LastEditors: Please set LastEditors
  * @Description: 
  *      a. 32 X 41 Reorder Buffer which is a FIFO-based
@@ -92,10 +92,7 @@
 
 //// Data writing
     always @(posedge clk) begin
-        if(reset) begin
-            r_ptr <= `ROB_READ_PTR_INIT_VALUE;
-            w_ptr <= `ROB_WRITE_PTR_INIT_VALUE;
-        end
+        if(reset) w_ptr <= `ROB_WRITE_PTR_INIT_VALUE;
         else begin
             // We assume that it is impossible that DU and CDB access 
             // the same ROB location at the same clock
@@ -124,8 +121,10 @@
     end
 
 //// Data reading 
-    always @(posedge clk) 
-        if(rob_r_en_q) r_ptr <= r_ptr + 1;
+    always @(posedge clk) begin
+        if(reset) r_ptr <= `ROB_READ_PTR_INIT_VALUE;
+        else if(rob_r_en_q) r_ptr <= r_ptr + 1;
+    end
     
     assign  gu_r_dout   =   (rob_r_en_q) ? mem[r_ptr[1:`ROB_PTR_WIDTH - 1]] : `ROB_READ_DATA_OUT_IDLE;
                         
