@@ -1,7 +1,7 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-05-01 02:05:34
- * @LastEditTime: 2020-05-01 03:00:04
+ * @LastEditTime: 2020-05-01 06:18:59
  * @LastEditors: Please set LastEditors
  * @Description: Parameters used by rob.v
  * @FilePath: /undefined/Users/yihaowang/Desktop/Tomasulo_3/Tomasulo_3_test1/projects/design/params/rob_params.v
@@ -25,3 +25,8 @@
  `define ROB_COMP_START_LOC 19 // the start bit of complete bit in ROB entry
  `define ROB_SW_ADDR_PART0_START_LOC 6
  `define ROB_SW_ADDR_PART1_START_LOC 20
+
+ `define ROB_READ_DATA_OUT_IDLE 0 // value of read data out port in idle state
+
+ `define ROB_READ_PTR_INIT_VALUE 0 // initial value of r_ptr
+ `define ROB_WRITE_PTR_INIT_VALUE 0 // initial value of w_ptr

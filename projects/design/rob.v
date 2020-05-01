@@ -1,7 +1,7 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-05-01 01:43:21
- * @LastEditTime: 2020-05-01 03:16:13
+ * @LastEditTime: 2020-05-01 06:18:12
  * @LastEditors: Please set LastEditors
  * @Description: 
  *      a. 32 X 41 Reorder Buffer which is a FIFO-based
@@ -16,26 +16,6 @@
  * @FilePath: /Tomasulo_3_test1/projects/design/rob.v
  */
  `include "./design/params/rob_params.v" // include macro definition file
-
-  `define ROB_DEPTH 32
- `define LOG2_ROB_DEPTH 5 // $clog2(ROB_DEPTH)
- `define ROB_PTR_WIDTH `LOG2_ROB_DEPTH + 1 // width of write and read pointer
- `define ROB_WIDTH 41 // width of ROB entry
- `define ROB_ROB_TAG_WIDTH `LOG2_ROB_DEPTH // width of ROB tag
- `define ROB_SW_ADDR_WIDTH 32 // memory address of SW 
-
- // width of sub-field
- `define ROB_CUR_RD_PID_WIDTH 6
- `define ROB_PRE_RD_PID_WIDTH 6
- `define ROB_RD_AID_WIDTH 5
- `define ROB_RS_PID_WIDTH 6
- `define ROB_SW_ADDR_PART0_WIDTH 11
- `define ROB_SW_ADDR_PART1_WIDTH 21
-
-  `define ROB_COMP_START_LOC 19 // the start bit of complete bit in ROB entry
-   `define ROB_SW_ADDR_PART0_START_LOC 6
- `define ROB_SW_ADDR_PART1_START_LOC 20
-
  module rob (
     clk, 
     reset,
@@ -91,28 +71,37 @@
     wire                                rob_w_en_q;         // qualified write enable
     wire                                rob_r_en_q;         // qualified read enable
 
+    wire    [0:`ROB_PTR_WIDTH - 1]      rob_flush_value;    // the value need to be flushed into w_ptr
+
     reg     [0:`ROB_WIDTH - 1]          mem     [0:`ROB_DEPTH - 1]; // memory array
 
-    assign  rob_w_en_q  =   (du_w_en && (!rob_full));       // generates qualified write enable 
-    assign  rob_r_en_q  =   (gu_r_en && (!rob_empty));      // generates qualified read enable 
+    assign  rob_w_en_q      =   (du_w_en && (!rob_full));       // generates qualified write enable 
+    assign  rob_r_en_q      =   (gu_r_en && (!rob_empty));      // generates qualified read enable 
     
-    assign  diff        =   w_ptr - r_ptr;                  // generates diff    
-    assign  rob_full    =   (diff == `ROB_DEPTH);           // generates rob_full
-    assign  rob_empty   =   (diff == 0);                    // generates rob_empty
+    assign  diff            =   w_ptr - r_ptr;                  // generates diff    
+    assign  rob_full        =   (diff == `ROB_DEPTH);           // generates rob_full
+    assign  rob_empty       =   (diff == 0);                    // generates rob_empty
 
-    assign  rob_rob_tag =   w_ptr[1:`ROB_PTR_WIDTH - 1];    // generates rob_rob_tag
+    assign  rob_rob_tag     =   w_ptr[1:`ROB_PTR_WIDTH - 1];    // generates rob_rob_tag
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    assign  rob_flush_value =   (cfc_flush_rob_tag >= r_ptr[1:`ROB_PTR_WIDTH - 1]) ?           // ???????????????????????????
+                                    {r_ptr[0], cfc_flush_rob_tag} :
+                                    {~r_ptr[0], cfc_flush_rob_tag};                            // Not sure !!!!!!!!!!!! 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //// Data writing
     always @(posedge clk) begin
         if(reset) begin
-            r_ptr <= 0;
-            w_ptr <= 0;
+            r_ptr <= `ROB_READ_PTR_INIT_VALUE;
+            w_ptr <= `ROB_WRITE_PTR_INIT_VALUE;
         end
         else begin
             // We assume that it is impossible that DU and CDB access 
             // the same ROB location at the same clock
 
-            if(rob_w_en_q) begin
+            if(cfc_flush) w_ptr <= rob_flush_value; // flush w_ptr has higher priority than writing
+            else if(rob_w_en_q) begin
                 mem[w_ptr[1:`ROB_PTR_WIDTH - 1]] <= du_w_din;
                 w_ptr <= w_ptr + 1;
             end
@@ -138,12 +127,6 @@
     always @(posedge clk) 
         if(rob_r_en_q) r_ptr <= r_ptr + 1;
     
-    assign  gu_r_dout   =   (rob_r_en_q) ? mem[r_ptr[1:`ROB_PTR_WIDTH - 1]] : 0;
+    assign  gu_r_dout   =   (rob_r_en_q) ? mem[r_ptr[1:`ROB_PTR_WIDTH - 1]] : `ROB_READ_DATA_OUT_IDLE;
                         
-                        
-
-    
-
-
-
-
+ endmodule
