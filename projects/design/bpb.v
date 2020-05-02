@@ -1,12 +1,13 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-04-28 03:02:55
- * @LastEditTime: 2020-04-28 21:20:34
+ * @LastEditTime: 2020-05-01 21:19:02
  * @LastEditors: Please set LastEditors
  * @Description: 
  *      a. 8 X 2 Branch prediction buffer using 2-bit predictor
  *      b. One read-only port used by DU to lookup
  *      c. One read-write port used by CDB to lookup and update
+ *      d. Supports internally forwarding
  * @FilePath: /Tomasulo_3/Tomasulo_3_test1/projects/design/bpb.v
  */
  `define DEPTH 8
@@ -79,7 +80,8 @@
 
 //// Read-only port:
     wire [0:`WIDTH - 1] read_predictor; // supports internally forwarding
-    assign read_predictor = (du_bpb_addr == cdb_bpb_addr) ? updated_predictor : mem[cdb_bpb_addr];
+    assign read_predictor = ((du_bpb_addr == cdb_bpb_addr) && cdb_branch) ? 
+                                updated_predictor : mem[du_bpb_addr];
 
     always @(*) // generates DU brach prediction based on 2-bit predictor
     begin 
