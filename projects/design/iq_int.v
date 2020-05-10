@@ -1,14 +1,15 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-05-05 20:27:20
- * @LastEditTime: 2020-05-06 00:51:58
+ * @LastEditTime: 2020-05-10 01:24:12
  * @LastEditors: Please set LastEditors
- * @Description: Integer Issue Queue
+ * @Description: 8 x 86 Integer Issue Queue
  * @FilePath: /Tomasulo_3_test1/projects/design/iq_int.v
  */
 
  `include "./params/rob_params.v"
  `include "./params/iq_params.v"
+ 
  module iq_int (
 
      clk,
@@ -31,32 +32,36 @@
 
  );
 
-    input                               clk;    // posedge triggerring
-    input                               reset;    // sync reset
+    input                               clk;            // posedge triggerring
+    input                               reset;          // sync reset
     
-    input                               du_w_en;    // write enable of DU
-    input   [0:`IQ_INT_WIDTH - 1]       du_w_din;  // write data in of DU
+    input                               du_w_en;        // write enable of DU
+    input   [0:`IQ_INT_WIDTH - 1]       du_w_din;       // write data in of DU
     output                              iq_int_full;    // integer issue queue full signal
 
-    input                               cdb_flush;  // cdb flush signal
-    input   [0:`ROB_PTR_WIDTH - 2]      rob_r_ptr;  // the current read pointer of ROB used to do selective flushing
-    input   [0:`ROB_ROB_TAG_WIDTH - 1]  cdb_rob_tag; // the rob tag of senior on CDB 
+    input                               cdb_flush;      // cdb flush signal
+    input   [0:`ROB_PTR_WIDTH - 2]      rob_r_ptr;      // the current read pointer of ROB used to do selective flushing
+    input   [0:`ROB_ROB_TAG_WIDTH - 1]  cdb_rob_tag;    // the rob tag of senior on CDB 
 
-    input                               cdb_reg_wr; // register write bit of senior on CDB
-    input   [0:`IQ_INT_RD_WIDTH - 1]    cdb_rd_pid; // the pid of rd of senior on CDB
+    input                               cdb_reg_wr;     // register write bit of senior on CDB
+    input   [0:`IQ_INT_RD_WIDTH - 1]    cdb_rd_pid;     // the pid of rd of senior on CDB
 
-    output                              iq_int_rdy; // ready signal of integer issue queue
+    output                              iq_int_rdy;     // ready signal of integer issue queue
     output  [0:`IQ_INT_WIDTH - 1]       iq_int_r_dout;  // read data out of integer issue queue
-    input                               iu_r_en;    // read enable of issue unit, means gets permission of issue unit
+    input                               iu_r_en;        // read enable of issue unit, means gets permission of issue unit
 
     
-    reg     [0:`IQ_INT_WIDTH - 1]   mem                 [0:`IQ_INT_DEPTH - 1]; // register array definition
+    reg     [0:`IQ_INT_WIDTH - 1]   mem                 [0:`IQ_INT_DEPTH - 1];  // register array definition
 
-    reg                             reg_update          [0:`IQ_INT_DEPTH - 1]; // register update control bits array
-    reg     [0:`IQ_INT_WIDTH - 1]   reg_update_value    [0:`IQ_INT_DEPTH - 1]; // register update value array
-    wire                            rdy_bit             [0:`IQ_INT_DEPTH - 1]; // ready bit array
+    reg                             reg_update          [0:`IQ_INT_DEPTH - 1];  // register update control bits array
+                                                                                // 1: shift; 0: hold;
+    reg     [0:`IQ_INT_WIDTH - 1]   reg_update_value    [0:`IQ_INT_DEPTH - 1];  // the value need to be updated
+    wire                            rdy_bit             [0:`IQ_INT_DEPTH - 1];  // ready bit array
+
+    reg                             shift_loc           [0:`IQ_INT_DEPTH - 1];  // Marks location of the most senior invalid location
     
     reg     [0:$clog2(`IQ_INT_DEPTH) - 1]   out_mux_sel;    // select signal of output MUX
+
 
     // Update ready bit array
     genvar i;
@@ -69,18 +74,20 @@
     end
     endgenerate
 
-    // Update reg_update_value
+    // Update reg_update_value array
     always @(*) begin : reg_update_value_update
         integer j;
         for(j = 0; j < `IQ_INT_DEPTH; j = j + 1) begin
             reg_update_value[j] = mem[j];
 
             if(cdb_flush) begin
+                // determined who is the junior of miss-proecited branch
                 if((mem[j][`IQ_INT_ROB_TAG_START_LOC+:`IQ_INT_ROB_TAG_WIDTH] - rob_r_ptr) >=
                     (cdb_rob_tag - rob_r_ptr))
-                    reg_update_value[j] = 0;
+                    reg_update_value[j] = 0; // flush all bits to 0
             end
             else begin
+            
                 if(cdb_reg_wr) begin
                     if(cdb_rd_pid == mem[j][`IQ_INT_RS_START_LOC+:`IQ_INT_RS_WIDTH])
                         reg_update_value[j][`IQ_INT_RS_RDY_START_LOC] = 1;
@@ -88,19 +95,21 @@
                         reg_update_value[j][`IQ_INT_RT_RDY_START_LOC] = 1;
                 end
 
+                // after reading one location, invalidate it at end of clock
                 if(iu_r_en && (j == out_mux_sel)) reg_update_value[j] = 0;
             end
         end
     end
 
-    // Generates reg_update array
-    reg     shift_loc   [0:`IQ_INT_DEPTH - 1];
+    // Generates shift_loc array
     always @(*) begin : shift_loc_update
         integer j;
-
+        
+        // pre-initialize all bits with 0
         for(j = 0; j < `IQ_INT_DEPTH; j = j + 1) 
             shift_loc[j] = 0;
 
+        // priority MUXs
         if(!mem[0][`IQ_INT_INSTR_VALID_START_LOC]) shift_loc[0] = 1;
         else if(!mem[1][`IQ_INT_INSTR_VALID_START_LOC]) shift_loc[1] = 1;
         else if(!mem[2][`IQ_INT_INSTR_VALID_START_LOC]) shift_loc[2] = 1;
@@ -112,6 +121,7 @@
 
     end
 
+    // Generated reg_update control signal array
     always @(*) begin : reg_update_update 
         integer j;
         for(j = 0; j < `IQ_INT_DEPTH; j = j + 1) begin
@@ -121,7 +131,8 @@
         end
     end
 
-    // Update each line of registers based on reg_update array
+    // Update each register based on reg_update array and reg_updaate_value
+    // Sequential part of issue queue
     always @(posedge clk) begin : sequential_block
         integer j;
         if(reset) 
@@ -129,11 +140,11 @@
                 mem[j] <= 0;
         else
             for(j = 0; j < `IQ_INT_DEPTH; j = j + 1) begin
-                if(j != `IQ_INT_DEPTH - 1) begin
+                if(j != `IQ_INT_DEPTH - 1) begin // if not the junior-most location
                     if(reg_update[j]) mem[j] <= reg_update_value[j + 1];
                     else mem[j] <= reg_update_value[j];
                 end
-                else begin
+                else begin  // junior-most location
                     if(reg_update[j]) begin
                         if(du_w_en) mem[j] <= du_w_din;
                         else mem[j] <= 0;
@@ -144,12 +155,12 @@
             end
     end
 
-    // if the top of queue plan to be updated,
+    // if the junior-most location will be updated or it is an invalid location
     // it means we can load new data into the top location at next postive edge
-    assign  iq_int_full =   (~reg_update[`IQ_INT_DEPTH - 1]); 
+    assign  iq_int_full =   (~reg_update[`IQ_INT_DEPTH - 1]) & mem[`IQ_INT_DEPTH - 1][`IQ_INT_INSTR_VALID_START_LOC]; 
 
     // Outputs instruction who has been ready based on priority
-    // JR has the highest priority 
+    // JR (not JR $31) has the highest priority 
     always @(*) begin
         out_mux_sel = 0;
         if(rdy_bit[0] & mem[0][`IQ_INT_JR_VALID_START_LOC]) out_mux_sel = 0;

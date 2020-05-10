@@ -1,7 +1,7 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-05-01 01:43:21
- * @LastEditTime: 2020-05-05 20:37:54
+ * @LastEditTime: 2020-05-06 01:43:34
  * @LastEditors: Please set LastEditors
  * @Description: 
  *      a. 32 X 41 Reorder Buffer which is a FIFO-based
@@ -15,7 +15,7 @@
  *          read-only port is used by graduation logic to make an instruction graduate form ROB;
  * @FilePath: /Tomasulo_3_test1/projects/design/rob.v
  */
- `include "./design/params/rob_params.v" // include macro definition file
+ `include "./params/rob_params.v" // include macro definition file
  module rob (
     clk, 
     reset,
