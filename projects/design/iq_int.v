@@ -1,15 +1,19 @@
 /*
  * @Author: Yihao Wang
  * @Date: 2020-05-05 20:27:20
- * @LastEditTime: 2020-05-10 01:24:12
+ * @LastEditTime: 2020-05-10 02:11:16
  * @LastEditors: Please set LastEditors
- * @Description: 8 x 86 Integer Issue Queue
+ * @Description: 
+ *      a. 8 x 86 Integer Issue Queue
+ *      b. 86-bit entry: {ROB_tag(5-bit), Rs_PID(6-bit), Rs_Rdy(1-bit), Rt_PID(6-bit), Rt_Rdy(1-bit), ALU-opcode(3-bit),
+                          Rd_PID(6-bit), Instr_valid(1-bit), Reg_Wr(1-bit), Imm_addend(16-bit), Branch(1-bit), Br_prediction(1-bit),
+                          Br_addr(32-bit), Br_PC(3-bit), JR_valid(1-bit), JR_31_valid(1-bit), JAL_valid(1-bit)}
  * @FilePath: /Tomasulo_3_test1/projects/design/iq_int.v
  */
 
  `include "./params/rob_params.v"
  `include "./params/iq_params.v"
- 
+ `timescale 1ns/1ps
  module iq_int (
 
      clk,
